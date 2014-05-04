@@ -164,6 +164,58 @@ d3.json("js/data.json", function(error, json) {
         return name.trim().replace(' ', '_').toLowerCase();
     }
 
+    // dragging
+    var drag = d3.behavior.drag()
+        .origin(function(d){
+            var target = d3.select(this).select('rect');
+            return {"x": 0, "y": target.attr('y')};
+         })
+        .on('drag', function(d){
+            var e = d3.event;
+            var target = d3.select(this);
+            // console.log(target); // e.x, e.y, e.dx, e.dy
+            // target.attr('transform', "translate(" + e.x + ",0)");
+        });
+
+    // highlighting
+    function makeHighlight(d,i){
+        // remove any existing highlight
+        svg.select('rect.highlight')
+            .transition()
+            .attr('opacity', 0)
+            .remove();
+
+        var t = d3.select(this);
+        if (t.classed('highlighted')) {
+            t.classed('highlighted', false)
+                .transition()
+                .attr('stroke', '#767676');
+        } else { // don't do this if you were clicking an already highlighted row
+            flat.selectAll('rect.highlighted')
+                .classed('highlighted', false)
+                .transition()
+                .attr('stroke', '#767676');
+
+            t.classed('highlighted', true)
+                .transition()
+                .duration(500)
+                .attr('stroke', '#000000');
+            svg.insert('rect', 'g')
+                .attr('width', w)
+                .attr('height', t.attr('height'))
+                .attr('y', +t.attr('y') + pad)
+                .classed('highlight', true)
+                .attr('fill', '#b1b0b0')
+                .attr('opacity', 0)
+                    .transition()
+                    .duration(500)
+                    .attr('opacity', 1);
+        }
+
+
+
+    }
+
 
     //*********************************************
     // start making shit
@@ -226,6 +278,7 @@ d3.json("js/data.json", function(error, json) {
         .data(json)
         .enter()
         .append("g")
+            .call(drag) // todo: make segments draggable
             .append("rect")
             .attr("x", pad)
             .attr("width", flatw - pad*2)
@@ -241,11 +294,13 @@ d3.json("js/data.json", function(error, json) {
             .attr("fill", function(d){
                 return colorScale(charToClass(d.narrator));
             })
+            .attr("stroke", " #767676")
+            .on('click', makeHighlight)
             .each(makeDots) // fill in timelines
             .each(makeOutline) // fill in text outline
             .each(makeThemes) // fill in theme tags
             .each(makeContextualPopup); // fill in contextual info for hover/click
-            // todo: make segments draggable
+
 
     // draw tension lines
     tension.selectAll('g.timeline')
