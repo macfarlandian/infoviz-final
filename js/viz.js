@@ -25,10 +25,10 @@ var svg = d3.select("body").insert("svg", "script:first-of-type");
 svg.attr({"width": w, "height": h});
 
 // add the panels for each viz
-var pov = svg.append('g').attr("class", "pov top");
-var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +",0)");
-var flat = svg.append('g').attr("class", "flat top").attr("transform", "translate("+ (povw + tensionw) +",0)");
-var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +",0)");
+var pov = svg.append('g').attr("class", "pov top").attr("transform","translate(0,"+pad+")");
+var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +","+pad+")");
+var flat = svg.append('g').attr("class", "flat top").attr("transform", "translate("+ (povw + tensionw) +","+pad+")");
+var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +","+pad+")");
 
 // add static elements (axes and labels and shit like that)
 // code tk
@@ -69,7 +69,7 @@ d3.json("js/data.json", function(error, json) {
 
     var flatBarScale = d3.scale.linear()
         .domain([0, json[json.length - 1].base + json[json.length - 1].words ])
-        .range([pad, h - pad]);
+        .range([0, h - pad*2]);
 
 
     // Sets the Y Coordinates
@@ -187,7 +187,7 @@ d3.json("js/data.json", function(error, json) {
     d3.selectAll('g.pov g.timeline')
         .append('line')
         .attr('x1', pov_tlinec)
-        .attr('y1', pad)
+        .attr('y1', 0)
         .attr('x2', pov_tlinec)
         .attr('y2', function(d,i){
             return flatBarScale.range()[1];
@@ -197,7 +197,7 @@ d3.json("js/data.json", function(error, json) {
     d3.selectAll('g.tension g.timeline')
         .append('line')
         .attr('x1', tension_tlinec)
-        .attr('y1', pad)
+        .attr('y1', 0)
         .attr('x2', tension_tlinec)
         .attr('y2', function(d,i){
             return flatBarScale.range()[1];
