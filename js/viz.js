@@ -164,34 +164,137 @@ d3.json("js/data.json", function(error, json) {
         return name.trim().replace(' ', '_').toLowerCase();
     }
 
+    function baseSort(a,b){
+        // sort dom elements in flatbar by their base values (restack after dragndrop)
+        return a.base - b.base;
+    }
+
     // dragging
     var drag = d3.behavior.drag()
         .origin(function(d){
             var target = d3.select(this).select('rect');
-            return {"x": 0, "y": target.attr('y')};
+            return {"x": 0, "y": parseFloat(target.attr('y'))};
          })
-        .on('drag', function(d){
+        .on('dragstart',function(d,i){ // aka mousedown
+            // don't do anything - see drag event
+        })
+        .on('drag', function(d,i){
+            // add a class to element being dragged
             var e = d3.event;
-            var target = d3.select(this);
-            // console.log(target); // e.x, e.y, e.dx, e.dy
-            // target.attr('transform', "translate(" + e.x + ",0)");
+            var t = d3.select(this);
+            var source = t.select('rect');
+
+            if (!t.classed('dragging')){ // only happens once
+                // add the class
+                t.classed('dragging', true);
+                // send to top
+                flat[0][0].appendChild(this);
+                // pass through pointer events
+                t.attr('pointer-events', 'none');
+                // initialize drag targets
+                flat.selectAll('g')
+                    .on('mouseover', function(){
+                        d3.select(this).classed('target', true);
+                    })
+                    .on('mouseout', function(){
+                        d3.select(this).classed('target', false);
+                    })
+            }
+            // console.log(e.x, e.y, e.dx, e.dy); //
+
+            // move the group contents
+            t.selectAll("rect, text")
+                .attr('y', function(d){
+                    var y0 = parseFloat(d3.select(this).attr('y'));
+                    // console.log(d3.select(this).attr('y'), y0, e.dy);
+                    return parseFloat(y0 + e.dy);
+                })
+
+            // bind a new target position
+            var drop = flat.select('g.target');
+            if (drop[0][0]){
+                var dropbase = +drop.datum().base;
+                var diff = t.datum().base - dropbase;
+                var sign = diff / Math.abs(diff);
+
+                // if moving up:
+                // subtract drop words from t base
+                // add t words to drop base
+                // if moving down:
+                // add drop words to t base
+                // subtract t words from drop base
+                t.datum().base -= (sign * drop.datum().words)
+                drop.datum().base += (sign * t.datum().words)
+                // reversing direction on mouseout?
+
+
+                // move drop target out of the way
+                drop.select('rect')
+                    .transition()
+                    .attr('y', function(d){
+                        return flatBarScale(d.base);
+                    });
+
+                drop.select('text')
+                    .transition()
+                    .attr('y', vScaleCenter);
+
+                // remove class to prevent recursion
+                drop.classed('target', false);
+
+            }
+
+
+
+        })
+        .on('dragend', function(d,i){ // aka mouseup
+            d3.event.sourceEvent.stopPropagation(); // prevent click event when you drop
+            var t = d3.select(this);
+            if (t.classed('dragging')) { // to avoid false dragends (mouseups)
+                // remove dragging class
+                t.classed('dragging', false);
+
+                // drop
+                t.select('rect')
+                    .transition()
+                    .attr('y', function(d){
+                        return flatBarScale(d.base);
+                    });
+                t.select('text')
+                    .transition()
+                    .attr('y', vScaleCenter);
+
+                // re-sort the DOM
+                flat.selectAll('g').sort(baseSort);
+
+                // save new order to JSON file
+
+                // deactivate drag targets
+
+                // restore pointer events
+                t.attr('pointer-events', '');
+            }
         });
+
+
 
     // highlighting
     function makeHighlight(d,i){
+        if (d3.event.defaultPrevented) return; // avoid conflict with drag
+
         // remove any existing highlight
         svg.select('rect.highlight')
             .transition()
             .attr('opacity', 0)
             .remove();
 
-        var t = d3.select(this);
+        var t = d3.select(this).select('rect');
         if (t.classed('highlighted')) {
             t.classed('highlighted', false)
                 .transition()
                 .attr('stroke', '#767676');
         } else { // don't do this if you were clicking an already highlighted row
-            flat.selectAll('rect.highlighted')
+            flat.selectAll('.highlighted')
                 .classed('highlighted', false)
                 .transition()
                 .attr('stroke', '#767676');
@@ -278,7 +381,8 @@ d3.json("js/data.json", function(error, json) {
         .data(json)
         .enter()
         .append("g")
-            .call(drag) // todo: make segments draggable
+            .call(drag)
+            .on('click', makeHighlight)
             .append("rect")
             .attr("x", pad)
             .attr("width", flatw - pad*2)
@@ -295,7 +399,6 @@ d3.json("js/data.json", function(error, json) {
                 return colorScale(charToClass(d.narrator));
             })
             .attr("stroke", " #767676")
-            .on('click', makeHighlight)
             .each(makeDots) // fill in timelines
             .each(makeOutline) // fill in text outline
             .each(makeThemes) // fill in theme tags
