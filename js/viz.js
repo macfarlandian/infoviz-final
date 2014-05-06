@@ -16,9 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 // define some dimensions for padding and proportions
-var grid = 12, col = 100, w = col * grid, h = 650, pad = 10;
+var grid = 12, col = 100, w = col * grid, h = 900, pad = 10;
+var headh = 75;
+
 // panel widths
 var povw = col * 4, tensionw = col * 5, flatw = col * 1, outlinew = col * 2; // multipliers should add up to grid
+var barw = 40;
 
 // initialize the svg
 var svg = d3.select("body").insert("svg", "script:first-of-type");
@@ -143,7 +146,7 @@ d3.json("js/data.json", function(err, json) {
 
     var tensionLineWidth = d3.scale.linear()
         .domain([0,7])
-        .range([0, tension_tlinec]);
+        .range([0, tension_tlinec - (pad/2)]);
 
 
     //**************************************
@@ -468,6 +471,55 @@ d3.json("js/data.json", function(err, json) {
     //*********************************************
     // start making shit
 
+    // make a label bar for the top of the page
+    var header = d3.select('body').insert('div', 'svg')
+        .classed('header', true);
+    header.append('div')
+        .classed('pov', true)
+        .style({'width': povw });
+
+    header.append('div')
+        .attr('class', 'tension')
+        .style({'width': tensionw});
+
+    header.selectAll('div').selectAll('div.label')
+        .data(narrators)
+        .enter()
+        .append('div')
+        .attr('class', 'label')
+        .text(function(d){ return d.key; })
+        .style('left', function(d,i){
+            if (d3.select(this.parentNode).classed("pov")){
+                var shift = povScale(i);
+            } else if (d3.select(this.parentNode).classed("tension")){
+                var shift = tensionScale(i);
+            }
+            return shift;
+        })
+    header.select('div.pov')
+        .insert('div', 'div')
+        .attr('class', 'title')
+        .text('POV Path');
+
+    header.select('div.tension')
+        .insert('div', 'div')
+        .attr('class', 'title')
+        .text('Tension Lines')
+
+    header.append('div')
+        .attr('class', 'chapters')
+        .style('width', flatw + outlinew)
+            .append('div')
+            .attr('class', 'title')
+            .text('Chapter IDs');
+    header.select('div.chapters')
+        .append('div')
+        .attr('class', 'toggle')
+            .append('a')
+            .attr('href', 'javascript:;')
+            .text('toggle themes');
+
+
     // timelines in pov and tension panels: one for each narrator
     d3.selectAll("g.pov, g.tension").selectAll('g')
         .data(narrators)
@@ -505,21 +557,6 @@ d3.json("js/data.json", function(err, json) {
         })
         .attr('class', 'axis');
 
-    // make pov path
-    // path generator
-    var povline = d3.svg.line()
-        .x(function(d){
-            // This is drawing the path between nodes. This is what you have to do to get the x coordinates
-            // Width + padding amount.
-            return povScale(narratorlist.indexOf(charToClass(d.narrator))) + pov_tlinec;
-        })
-        .y(vScaleCenter)
-        .interpolate('linear');
-    pov.datum(json)
-        .append("path")
-        .attr("d", povline)
-        .attr("class", "pov");
-
     // make pov dots
     pov_tlines.selectAll('circle.narrator')
         .data(function(d,i){
@@ -528,8 +565,8 @@ d3.json("js/data.json", function(err, json) {
         .enter()
             .append('circle')
             .classed('narrator', true)
-            .attr('r', 6)
-            .attr('opacity', 0.9)
+            .attr('r', 8)
+            .attr('opacity', 0.8)
             .attr('cx', pov_tlinec)
             .attr('cy', vScaleCenter)
             .attr('fill', function(d){
@@ -544,7 +581,7 @@ d3.json("js/data.json", function(err, json) {
         .enter()
             .append('circle')
             .classed('character', true)
-            .attr('r', 3)
+            .attr('r', 5)
             .attr('opacity', 0.4)
             .attr('cx', pov_tlinec)
             .attr('cy', vScaleCenter)
@@ -562,8 +599,8 @@ d3.json("js/data.json", function(err, json) {
             .call(drag)
             .append("rect")
             .on('click', makeHighlight)
-            .attr("x", pad)
-            .attr("width", flatw - pad*2)
+            .attr("x", pad * 3)
+            .attr("width", barw)
             .attr("class", function(d){
                 return charToClass(d.narrator);
             })
@@ -581,6 +618,22 @@ d3.json("js/data.json", function(err, json) {
             .each(makeContextualPopup); // fill in contextual info for hover/click
 
 
+    // make pov path
+    // path generator
+    var povline = d3.svg.line()
+        .x(function(d){
+            // This is drawing the path between nodes. This is what you have to do to get the x coordinates
+            // Width + padding amount.
+            return povScale(narratorlist.indexOf(charToClass(d.narrator))) + pov_tlinec;
+        })
+        .y(vScaleCenter)
+        .interpolate('linear');
+
+    pov.datum(json)
+        .insert("path", 'g')
+        .attr("d", povline)
+        .attr("class", "pov");
+
 
     // draw tension lines
     tension.selectAll('g.timeline')
@@ -589,4 +642,5 @@ d3.json("js/data.json", function(err, json) {
         .attr("points", makePoints)
         .attr("fill", function(d){ return colorScale(charToClass(d[0].narrator)); })
         .attr("stroke", function(d){ return colorScale(charToClass(d[0].narrator)); })
+        .attr('opacity', 0.8);
 });

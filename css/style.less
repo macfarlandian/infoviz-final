@@ -1,13 +1,56 @@
 // out: style.css
 
+@import url(http://fonts.googleapis.com/css?family=Varela);
+
 // dimension variables for calculation
 @w: 1200px;
 @h: 650px;
 @grid: (@w / 10);
 @grey: #767676;
+@headh: 80px;
 
-// settings
+div.header {
+    height: @headh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.85);
+    box-sizing: border-box;
+    padding: 10px;
+    font-family: 'Varela', sans-serif;
+
+    div.pov, div.tension, div.chapters {
+        position: relative;
+        float: left;
+        height: 100%;
+        .title {
+            text-align: center;
+            font-size: 20px;
+        }
+
+        .label {
+            position: absolute;
+            font-size: 12px;
+            &:nth-of-type(odd){
+                bottom: 0;
+            }
+            &:nth-of-type(even){
+                bottom: 12px;
+            }
+        }
+        .toggle {
+            width: 100%;
+            text-align: center;
+            font-size: 13px;
+
+        }
+
+    }
+}
+
 svg {
+    margin-top: @headh;
     line.axis {
         stroke: @grey;
         stroke-width: 1;
