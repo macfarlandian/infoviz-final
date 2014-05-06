@@ -35,8 +35,8 @@ var outline = svg.append('g').attr("class", "outline top").attr("transform", "tr
 
 // get the data async and populate the viz
 var data, narrators;
-d3.json("js/data.json", function(error, json) {
-    if (error) return console.warn(error);
+d3.json("js/data.json", function(err, json) {
+    if (err) return console.warn(err);
 
     //************************************
     // data wrangling
@@ -275,9 +275,19 @@ d3.json("js/data.json", function(error, json) {
                 // restore pointer events
                 t.attr('pointer-events', '');
 
-                // save new order to JSON file
                 // backup old JSON first
-                
+                d3.xhr('js/backup.php', 'application/json')
+                    .post(JSON.stringify(json), function(error, response){
+                        // don't overwrite the old one unless there's no error
+                        if (!error) {
+                            // save new data to JSON
+                            d3.xhr('js/save.php', 'application/json')
+                                .post(JSON.stringify(flat.selectAll('g').data()), function(error, response){
+                                    // don't do anything
+                                });
+                        }
+                    });
+
 
 
             }
