@@ -219,7 +219,7 @@ d3.json("js/data.json", function(err, json) {
         nodeSelection.select("text").style({"font-size":'14px'})
     }
 
-    
+
     // 'this' refers to something else different from the this in makeOutline
     function theme_click(d) {
         if (state === "themes") {
@@ -425,7 +425,7 @@ d3.json("js/data.json", function(err, json) {
             .attr('opacity', 0)
             .remove();
 
-        var t = d3.select(this).select('rect');
+        var t = d3.select(this);
         if (t.classed('highlighted')) {
             t.classed('highlighted', false)
                 .transition()
@@ -552,8 +552,8 @@ d3.json("js/data.json", function(err, json) {
         .enter()
         .append("g")
             .call(drag)
-            .on('click', makeHighlight)
             .append("rect")
+            .on('click', makeHighlight)
             .attr("x", pad)
             .attr("width", flatw - pad*2)
             .attr("class", function(d){
@@ -569,9 +569,7 @@ d3.json("js/data.json", function(err, json) {
                 return colorScale(charToClass(d.narrator));
             })
             .attr("stroke", " #767676")
-            // .each(makeDots) // fill in timelines
             .each(makeOutline) // fill in text outline
-            .each(makeThemes) // fill in theme tags
             .each(makeContextualPopup); // fill in contextual info for hover/click
 
 
