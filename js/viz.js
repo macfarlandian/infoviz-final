@@ -59,10 +59,13 @@ d3.json("js/data.json", function(err, json) {
     })
 
     // nest the data by narrator to make character timelines
-    narrators = d3.nest()
-        .key(function(d){ return d.narrator.toLowerCase(); })
-        .entries(json);
-
+    function makeNarrators(dataset){
+        return d3.nest()
+            .key(function(d){ return d.narrator.toLowerCase(); })
+            .sortKeys(d3.ascending)
+            .entries(dataset);
+    }
+    narrators = makeNarrators(json);
 
     //***********************************
     // scales
@@ -288,8 +291,18 @@ d3.json("js/data.json", function(err, json) {
                         }
                     });
 
-
-
+                // update the viz
+                var new_narrators = makeNarrators(flat.selectAll('g').data());
+                // pov
+                pov_tlines.data(new_narrators);
+                pov_tlines.selectAll("circle.narrator")
+                    .data(function(d){
+                        // console.log(d);
+                        return d.values;
+                    })
+                    .transition()
+                    .duration(500)
+                    .attr('cy', vScaleCenter);
             }
         });
 
@@ -354,8 +367,9 @@ d3.json("js/data.json", function(err, json) {
         });
 
 
-    d3.selectAll('g.pov g.timeline')
-        .append('line')
+    var pov_tlines = d3.selectAll('g.pov g.timeline');
+
+    pov_tlines.append('line')
         .attr('x1', pov_tlinec)
         .attr('y1', 0)
         .attr('x2', pov_tlinec)
@@ -384,11 +398,41 @@ d3.json("js/data.json", function(err, json) {
         })
         .y(vScaleCenter)
         .interpolate('linear');
-
     pov.datum(json)
         .append("path")
         .attr("d", povline)
         .attr("class", "pov");
+
+    // make pov dots
+    pov_tlines.selectAll('circle.narrator')
+        .data(function(d,i){
+            return d.values;
+        })
+        .enter()
+            .append('circle')
+            .classed('narrator', true)
+            .attr('r', 6)
+            .attr('opacity', 0.9)
+            .attr('cx', pov_tlinec)
+            .attr('cy', vScaleCenter)
+            .attr('fill', function(d){
+                return colorScale(charToClass(d.narrator));
+            });
+    // make secondary character dots
+    // pov_tlines.selectAll('circle.character')
+    //     // .data(function(d,i){
+    //     //     return d.characters;
+    //     // })
+    //     // .enter()
+    //         .append('circle')
+    //         .classed('character', true)
+    //         .attr('r', 3)
+    //         .attr('opacity', 0.4)
+    //         .attr('cx', pov_tlinec)
+    //         .attr('cy', vScaleCenter)
+    //         .attr('fill', function(d){
+    //             return colorScale(charToClass(d.narrator));
+    //         });
 
     // flat bar
     // this loop populates the other panels because the bar has everything
@@ -414,7 +458,7 @@ d3.json("js/data.json", function(err, json) {
                 return colorScale(charToClass(d.narrator));
             })
             .attr("stroke", " #767676")
-            .each(makeDots) // fill in timelines
+            // .each(makeDots) // fill in timelines
             .each(makeOutline) // fill in text outline
             .each(makeThemes) // fill in theme tags
             .each(makeContextualPopup); // fill in contextual info for hover/click
@@ -439,5 +483,5 @@ d3.json("js/data.json", function(err, json) {
             return points;
         })
         .attr("fill", function(d){ return colorScale(charToClass(d[0].narrator)); })
-        .attr("stroke", function(d){ return colorScale(charToClass(d[0].narrator)); });
+        .attr("stroke", function(d){ return colorScale(charToClass(d[0].narrator)); })
 });
