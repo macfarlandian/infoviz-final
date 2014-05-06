@@ -198,7 +198,7 @@ d3.json("js/data.json", function(error, json) {
                     })
                     .on('mouseout', function(){
                         d3.select(this).classed('target', false);
-                    })
+                    });
             }
             // console.log(e.x, e.y, e.dx, e.dy); //
 
@@ -270,6 +270,9 @@ d3.json("js/data.json", function(error, json) {
                 // save new order to JSON file
 
                 // deactivate drag targets
+                flat.selectAll('g')
+                    .on('mouseover', null)
+                    .on('mouseout', null);
 
                 // restore pointer events
                 t.attr('pointer-events', '');
