@@ -25,10 +25,10 @@ var svg = d3.select("body").insert("svg", "script:first-of-type");
 svg.attr({"width": w, "height": h});
 
 // add the panels for each viz
-var pov = svg.append('g').attr("class", "pov top");
-var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +",0)");
-var flat = svg.append('g').attr("class", "flat top").attr("transform", "translate("+ (povw + tensionw) +",0)");
-var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +",0)");
+var pov = svg.append('g').attr("class", "pov top").attr("transform","translate(0,"+pad+")");
+var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +","+pad+")");
+var flat = svg.append('g').attr("class", "flat top").attr("transform", "translate("+ (povw + tensionw) +","+pad+")");
+var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +","+pad+")");
 
 // add static elements (axes and labels and shit like that)
 // code tk
@@ -36,8 +36,8 @@ var state = "chapters";
 
 // get the data async and populate the viz
 var data, narrators;
-d3.json("js/data.json", function(error, json) {
-    if (error) return console.warn(error);
+d3.json("js/data.json", function(err, json) {
+    if (err) return console.warn(err);
 
     //************************************
     // data wrangling
@@ -60,17 +60,54 @@ d3.json("js/data.json", function(error, json) {
     })
 
     // nest the data by narrator to make character timelines
-    narrators = d3.nest()
-        .key(function(d){ return d.narrator.toLowerCase(); })
-        .entries(json);
+    function makeNarrators(dataset){
+        return d3.nest()
+            .key(function(d){ return d.narrator.toLowerCase(); })
+            .sortKeys(d3.ascending)
+            .entries(dataset);
+    }
+    narrators = makeNarrators(json);
 
+    var narratorlist = [];
+    narrators.forEach(function(d,i,a){
+        narratorlist.push(d.key.toLowerCase());
+    });
+    old_narratorlist = narratorlist.slice();
+
+
+    // remove characters who aren't narrators
+    json.forEach(function(d,i,a){
+        d.characters = d.characters.filter(function(v,i,a){
+            // they are a narrator BUT not the current narrator
+            return (narratorlist.indexOf(v.toLowerCase()) != -1) && (v != d.narrator.toLowerCase());
+        });
+        d.characters.forEach(function(v,i,a){
+            a[i] = v.toLowerCase();
+        })
+    });
+
+    function makeCharacters(dataset){
+        var list = [];
+        old_narratorlist.forEach(function(v,i,a){
+            var obj = {"key": v, "values": []};
+            dataset.forEach(function(c,i,a){
+                if (c.characters.indexOf(v) != -1){
+                    obj.values.push(c);
+                }
+            });
+            list.push(obj);
+        });
+
+        return list;
+    }
+    characters = makeCharacters(json);
 
     //***********************************
     // scales
 
     var flatBarScale = d3.scale.linear()
         .domain([0, json[json.length - 1].base + json[json.length - 1].words ])
-        .range([pad, h - pad]);
+        .range([0, h - pad*2]);
 
 
     // Sets the Y Coordinates
@@ -99,10 +136,9 @@ d3.json("js/data.json", function(error, json) {
     var outlineScale = makePanelScale(outlinew);
 
     var colorScale = d3.scale.category10(); // temporary; will choose real colors later
-    var narratorlist = [];
-    narrators.forEach(function(d,i,a){
-        narratorlist.push(charToClass(d.key));
-    });
+    narratorlist.forEach(function(d,i,a){
+        a[i] = charToClass(d);
+    })
     colorScale.domain(narratorlist);
 
     var tensionLineWidth = d3.scale.linear()
@@ -140,6 +176,20 @@ d3.json("js/data.json", function(error, json) {
         });
     }
 
+    function makePoints(d){
+        var points = ""
+        d.forEach(function(c,i,a){
+            points += (tension_tlinec - tensionLineWidth(c.tension));
+            points += " " + vScaleCenter(c) + " ";
+        });
+        d.reverse();
+        d.forEach(function(c,i,a){
+            points += (tension_tlinec + tensionLineWidth(c.tension));
+            points += " " + vScaleCenter(c) + " ";
+        });
+        d.reverse();
+        return points;
+    }
 
     /// Stuff you edited
     function makeOutline(d){
@@ -193,6 +243,219 @@ d3.json("js/data.json", function(error, json) {
         return name.trim().replace(' ', '_').toLowerCase();
     }
 
+    function baseSort(a,b){
+        // sort dom elements in flatbar by their base values (restack after dragndrop)
+        return a.base - b.base;
+    }
+
+    // dragging
+    var drag = d3.behavior.drag()
+        .origin(function(d){
+            var target = d3.select(this).select('rect');
+            return {"x": 0, "y": parseFloat(target.attr('y'))};
+         })
+        .on('dragstart',function(d,i){ // aka mousedown
+            // don't do anything - see drag event
+        })
+        .on('drag', function(d,i){
+            // add a class to element being dragged
+            var e = d3.event;
+            var t = d3.select(this);
+            var source = t.select('rect');
+
+            if (!t.classed('dragging')){ // only happens once
+                // add the class
+                t.classed('dragging', true);
+                // send to top
+                flat[0][0].appendChild(this);
+                // pass through pointer events
+                t.attr('pointer-events', 'none');
+                // initialize drag targets
+                flat.selectAll('g')
+                    .on('mouseover', function(){
+                        d3.select(this).classed('target', true);
+                    })
+                    .on('mouseout', function(){
+                        d3.select(this).classed('target', false);
+                    });
+            }
+            // console.log(e.x, e.y, e.dx, e.dy); //
+
+            // move the group contents
+            t.selectAll("rect, text")
+                .attr('y', function(d){
+                    var y0 = parseFloat(d3.select(this).attr('y'));
+                    // console.log(d3.select(this).attr('y'), y0, e.dy);
+                    return parseFloat(y0 + e.dy);
+                })
+
+            // bind a new target position
+            var drop = flat.select('g.target');
+            if (drop[0][0]){
+                var dropbase = +drop.datum().base;
+                var diff = t.datum().base - dropbase;
+                var sign = diff / Math.abs(diff);
+
+                // if moving up:
+                // subtract drop words from t base
+                // add t words to drop base
+                // if moving down:
+                // add drop words to t base
+                // subtract t words from drop base
+                t.datum().base -= (sign * drop.datum().words)
+                drop.datum().base += (sign * t.datum().words)
+                // reversing direction on mouseout?
+
+
+                // move drop target out of the way
+                drop.select('rect')
+                    .transition()
+                    .attr('y', function(d){
+                        return flatBarScale(d.base);
+                    });
+
+                drop.select('text')
+                    .transition()
+                    .attr('y', vScaleCenter);
+
+                // remove class to prevent recursion
+                drop.classed('target', false);
+
+            }
+
+
+
+        })
+        .on('dragend', function(d,i){ // aka mouseup
+            d3.event.sourceEvent.stopPropagation(); // prevent click event when you drop
+            var t = d3.select(this);
+            if (t.classed('dragging')) { // to avoid false dragends (mouseups)
+                // remove dragging class
+                t.classed('dragging', false);
+
+                // drop
+                t.select('rect')
+                    .transition()
+                    .attr('y', function(d){
+                        return flatBarScale(d.base);
+                    });
+                t.select('text')
+                    .transition()
+                    .attr('y', vScaleCenter);
+
+                // re-sort the DOM
+                flat.selectAll('g').sort(baseSort);
+
+                // deactivate drag targets
+                flat.selectAll('g')
+                    .on('mouseover', null)
+                    .on('mouseout', null);
+
+                // restore pointer events
+                t.attr('pointer-events', '');
+
+                // backup old JSON first
+                d3.xhr('js/backup.php', 'application/json')
+                    .post(JSON.stringify(json), function(error, response){
+                        // don't overwrite the old one unless there's no error
+                        if (!error) {
+                            // save new data to JSON
+                            d3.xhr('js/save.php', 'application/json')
+                                .post(JSON.stringify(flat.selectAll('g').data()), function(error, response){
+                                    // don't do anything
+                                });
+                        }
+                    });
+
+                // update the viz
+                var new_narrators = makeNarrators(flat.selectAll('g').data());
+                // pov
+                pov_tlines.data(new_narrators);
+                pov_tlines.selectAll("circle.narrator")
+                    .data(function(d){
+                        // console.log(d);
+                        return d.values;
+                    })
+                    .transition()
+                    .duration(500)
+                    .attr('cy', vScaleCenter);
+
+                var new_characters = makeCharacters(flat.selectAll('g').data());
+                pov_tlines.selectAll("circle.character")
+                    .data(function(d,i){
+                        return new_characters[i].values;
+                    })
+                    .transition()
+                    .duration(500)
+                    .attr('cy', vScaleCenter);
+
+                // line
+                pov.datum(flat.selectAll('g').data()).select('path.pov')
+                    .transition()
+                    .duration(500)
+                    .attr("d", povline);
+
+                // tension lines
+                tension.selectAll('g.timeline')
+                    .datum(function(d,i){
+                        return new_narrators[i].values;
+                    })
+                    .select('polygon')
+                    .transition()
+                    .duration(500)
+                    .attr('points', makePoints);
+
+                // try to realign everything in the flat bar
+                flat.selectAll('g').selectAll('rect')
+                    .transition()
+                    .duration(500)
+                    .attr('y', function(d){
+                        return flatBarScale(d.base);
+                    });
+            }
+        });
+
+    // highlighting
+    function makeHighlight(d,i){
+        if (d3.event.defaultPrevented) return; // avoid conflict with drag
+
+        // remove any existing highlight
+        svg.select('rect.highlight')
+            .transition()
+            .attr('opacity', 0)
+            .remove();
+
+        var t = d3.select(this).select('rect');
+        if (t.classed('highlighted')) {
+            t.classed('highlighted', false)
+                .transition()
+                .attr('stroke', '#767676');
+        } else { // don't do this if you were clicking an already highlighted row
+            flat.selectAll('.highlighted')
+                .classed('highlighted', false)
+                .transition()
+                .attr('stroke', '#767676');
+
+            t.classed('highlighted', true)
+                .transition()
+                .duration(500)
+                .attr('stroke', '#000000');
+            svg.insert('rect', 'g')
+                .attr('width', w)
+                .attr('height', t.attr('height'))
+                .attr('y', +t.attr('y') + pad)
+                .classed('highlight', true)
+                .attr('fill', '#b1b0b0')
+                .attr('opacity', 0)
+                    .transition()
+                    .duration(500)
+                    .attr('opacity', 1);
+        }
+
+
+
+    }
+
 
     //*********************************************
     // start making shit
@@ -213,10 +476,11 @@ d3.json("js/data.json", function(error, json) {
         });
 
 
-    d3.selectAll('g.pov g.timeline')
-        .append('line')
+    var pov_tlines = d3.selectAll('g.pov g.timeline');
+
+    pov_tlines.append('line')
         .attr('x1', pov_tlinec)
-        .attr('y1', pad)
+        .attr('y1', 0)
         .attr('x2', pov_tlinec)
         .attr('y2', function(d,i){
             return flatBarScale.range()[1];
@@ -226,7 +490,7 @@ d3.json("js/data.json", function(error, json) {
     d3.selectAll('g.tension g.timeline')
         .append('line')
         .attr('x1', tension_tlinec)
-        .attr('y1', pad)
+        .attr('y1', 0)
         .attr('x2', tension_tlinec)
         .attr('y2', function(d,i){
             return flatBarScale.range()[1];
@@ -243,11 +507,43 @@ d3.json("js/data.json", function(error, json) {
         })
         .y(vScaleCenter)
         .interpolate('linear');
-
     pov.datum(json)
         .append("path")
         .attr("d", povline)
         .attr("class", "pov");
+
+    // make pov dots
+    pov_tlines.selectAll('circle.narrator')
+        .data(function(d,i){
+            return d.values;
+        })
+        .enter()
+            .append('circle')
+            .classed('narrator', true)
+            .attr('r', 6)
+            .attr('opacity', 0.9)
+            .attr('cx', pov_tlinec)
+            .attr('cy', vScaleCenter)
+            .attr('fill', function(d){
+                return colorScale(charToClass(d.narrator));
+            });
+
+    // make secondary character dots
+    pov_tlines.selectAll('circle.character')
+        .data(function(d,i){
+            return characters[i].values;
+        })
+        .enter()
+            .append('circle')
+            .classed('character', true)
+            .attr('r', 3)
+            .attr('opacity', 0.4)
+            .attr('cx', pov_tlinec)
+            .attr('cy', vScaleCenter)
+            .attr('fill', function(d){
+                var char = d3.select(this.parentNode).attr('class').replace(' timeline', '');
+                return colorScale(char);
+            });
 
     // flat bar
     // this loop populates the other panels because the bar has everything
@@ -255,6 +551,8 @@ d3.json("js/data.json", function(error, json) {
         .data(json)
         .enter()
         .append("g")
+            .call(drag)
+            .on('click', makeHighlight)
             .append("rect")
             .attr("x", pad)
             .attr("width", flatw - pad*2)
@@ -270,31 +568,19 @@ d3.json("js/data.json", function(error, json) {
             .attr("fill", function(d){
                 return colorScale(charToClass(d.narrator));
             })
-            .each(makeDots) // fill in timelines
+            .attr("stroke", " #767676")
+            // .each(makeDots) // fill in timelines
             .each(makeOutline) // fill in text outline
             .each(makeThemes) // fill in theme tags
             .each(makeContextualPopup); // fill in contextual info for hover/click
-            // todo: make segments draggable
+
 
 
     // draw tension lines
     tension.selectAll('g.timeline')
         .datum(function(d){return d.values;})
         .append("polygon")
-        .attr("points", function(d){
-            var points = ""
-            d.forEach(function(c,i,a){
-                points += (tension_tlinec - tensionLineWidth(c.tension));
-                points += " " + vScaleCenter(c) + " ";
-            });
-            d.reverse();
-            d.forEach(function(c,i,a){
-                points += (tension_tlinec + tensionLineWidth(c.tension));
-                points += " " + vScaleCenter(c) + " ";
-            });
-            d.reverse();
-            return points;
-        })
+        .attr("points", makePoints)
         .attr("fill", function(d){ return colorScale(charToClass(d[0].narrator)); })
-        .attr("stroke", function(d){ return colorScale(charToClass(d[0].narrator)); });
+        .attr("stroke", function(d){ return colorScale(charToClass(d[0].narrator)); })
 });
