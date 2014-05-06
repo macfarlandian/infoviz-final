@@ -267,8 +267,6 @@ d3.json("js/data.json", function(error, json) {
                 // re-sort the DOM
                 flat.selectAll('g').sort(baseSort);
 
-                // save new order to JSON file
-
                 // deactivate drag targets
                 flat.selectAll('g')
                     .on('mouseover', null)
@@ -276,10 +274,14 @@ d3.json("js/data.json", function(error, json) {
 
                 // restore pointer events
                 t.attr('pointer-events', '');
+
+                // save new order to JSON file
+                // backup old JSON first
+                
+
+
             }
         });
-
-
 
     // highlighting
     function makeHighlight(d,i){
