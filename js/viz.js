@@ -175,6 +175,20 @@ d3.json("js/data.json", function(err, json) {
         });
     }
 
+    function makePoints(d){
+        var points = ""
+        d.forEach(function(c,i,a){
+            points += (tension_tlinec - tensionLineWidth(c.tension));
+            points += " " + vScaleCenter(c) + " ";
+        });
+        d.reverse();
+        d.forEach(function(c,i,a){
+            points += (tension_tlinec + tensionLineWidth(c.tension));
+            points += " " + vScaleCenter(c) + " ";
+        });
+        d.reverse();
+        return points;
+    }
 
     /// Stuff you edited
     function makeOutline(d){
@@ -336,6 +350,39 @@ d3.json("js/data.json", function(err, json) {
                     .transition()
                     .duration(500)
                     .attr('cy', vScaleCenter);
+
+                var new_characters = makeCharacters(flat.selectAll('g').data());
+                pov_tlines.selectAll("circle.character")
+                    .data(function(d,i){
+                        return new_characters[i].values;
+                    })
+                    .transition()
+                    .duration(500)
+                    .attr('cy', vScaleCenter);
+
+                // line
+                pov.datum(flat.selectAll('g').data()).select('path.pov')
+                    .transition()
+                    .duration(500)
+                    .attr("d", povline);
+
+                // tension lines
+                tension.selectAll('g.timeline')
+                    .datum(function(d,i){
+                        return new_narrators[i].values;
+                    })
+                    .select('polygon')
+                    .transition()
+                    .duration(500)
+                    .attr('points', makePoints);
+
+                // try to realign everything in the flat bar
+                flat.selectAll('g').selectAll('rect')
+                    .transition()
+                    .duration(500)
+                    .attr('y', function(d){
+                        return flatBarScale(d.base);
+                    });
             }
         });
 
@@ -503,20 +550,7 @@ d3.json("js/data.json", function(err, json) {
     tension.selectAll('g.timeline')
         .datum(function(d){return d.values;})
         .append("polygon")
-        .attr("points", function(d){
-            var points = ""
-            d.forEach(function(c,i,a){
-                points += (tension_tlinec - tensionLineWidth(c.tension));
-                points += " " + vScaleCenter(c) + " ";
-            });
-            d.reverse();
-            d.forEach(function(c,i,a){
-                points += (tension_tlinec + tensionLineWidth(c.tension));
-                points += " " + vScaleCenter(c) + " ";
-            });
-            d.reverse();
-            return points;
-        })
+        .attr("points", makePoints)
         .attr("fill", function(d){ return colorScale(charToClass(d[0].narrator)); })
         .attr("stroke", function(d){ return colorScale(charToClass(d[0].narrator)); })
 });
