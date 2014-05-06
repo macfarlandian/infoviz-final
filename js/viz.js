@@ -346,6 +346,14 @@ d3.json("js/data.json", function(err, json) {
                 // re-sort the DOM
                 flat.selectAll('g').sort(baseSort);
 
+                // recalculate bases
+                var baseline = 0;
+                flat.selectAll('g').data().forEach(function(d){
+                    // add baseline shift to data for stacking
+                    d.base = baseline;
+                    baseline += +d.words;
+                })
+
                 // deactivate drag targets
                 flat.selectAll('g')
                     .on('mouseover', null)
@@ -405,7 +413,7 @@ d3.json("js/data.json", function(err, json) {
                     .duration(500)
                     .attr('points', makePoints);
 
-                // try to realign everything in the flat bar
+                // realign everything in the flat bar
                 flat.selectAll('g').selectAll('rect')
                     .transition()
                     .duration(500)
