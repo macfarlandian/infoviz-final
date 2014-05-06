@@ -67,6 +67,40 @@ d3.json("js/data.json", function(err, json) {
     }
     narrators = makeNarrators(json);
 
+    var narratorlist = [];
+    narrators.forEach(function(d,i,a){
+        narratorlist.push(d.key.toLowerCase());
+    });
+    old_narratorlist = narratorlist.slice();
+
+
+    // remove characters who aren't narrators
+    json.forEach(function(d,i,a){
+        d.characters = d.characters.filter(function(v,i,a){
+            // they are a narrator BUT not the current narrator
+            return (narratorlist.indexOf(v.toLowerCase()) != -1) && (v != d.narrator.toLowerCase());
+        });
+        d.characters.forEach(function(v,i,a){
+            a[i] = v.toLowerCase();
+        })
+    });
+
+    function makeCharacters(dataset){
+        var list = [];
+        old_narratorlist.forEach(function(v,i,a){
+            var obj = {"key": v, "values": []};
+            dataset.forEach(function(c,i,a){
+                if (c.characters.indexOf(v) != -1){
+                    obj.values.push(c);
+                }
+            });
+            list.push(obj);
+        });
+
+        return list;
+    }
+    characters = makeCharacters(json);
+
     //***********************************
     // scales
 
@@ -101,10 +135,9 @@ d3.json("js/data.json", function(err, json) {
     var outlineScale = makePanelScale(outlinew);
 
     var colorScale = d3.scale.category10(); // temporary; will choose real colors later
-    var narratorlist = [];
-    narrators.forEach(function(d,i,a){
-        narratorlist.push(charToClass(d.key));
-    });
+    narratorlist.forEach(function(d,i,a){
+        a[i] = charToClass(d);
+    })
     colorScale.domain(narratorlist);
 
     var tensionLineWidth = d3.scale.linear()
@@ -418,21 +451,23 @@ d3.json("js/data.json", function(err, json) {
             .attr('fill', function(d){
                 return colorScale(charToClass(d.narrator));
             });
+
     // make secondary character dots
-    // pov_tlines.selectAll('circle.character')
-    //     // .data(function(d,i){
-    //     //     return d.characters;
-    //     // })
-    //     // .enter()
-    //         .append('circle')
-    //         .classed('character', true)
-    //         .attr('r', 3)
-    //         .attr('opacity', 0.4)
-    //         .attr('cx', pov_tlinec)
-    //         .attr('cy', vScaleCenter)
-    //         .attr('fill', function(d){
-    //             return colorScale(charToClass(d.narrator));
-    //         });
+    pov_tlines.selectAll('circle.character')
+        .data(function(d,i){
+            return characters[i].values;
+        })
+        .enter()
+            .append('circle')
+            .classed('character', true)
+            .attr('r', 3)
+            .attr('opacity', 0.4)
+            .attr('cx', pov_tlinec)
+            .attr('cy', vScaleCenter)
+            .attr('fill', function(d){
+                var char = d3.select(this.parentNode).attr('class').replace(' timeline', '');
+                return colorScale(char);
+            });
 
     // flat bar
     // this loop populates the other panels because the bar has everything
