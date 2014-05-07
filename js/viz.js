@@ -439,7 +439,6 @@ d3.json("js/data.json", function(err, json) {
     // highlighting
     function makeHighlight(d,i){
         if (d3.event.defaultPrevented) return; // avoid conflict with drag
-
         var oldstroke = flat.select('rect:not(.highlighted)').attr('stroke');
 
         // remove any existing highlight
@@ -451,7 +450,13 @@ d3.json("js/data.json", function(err, json) {
         // return g to correct order
         flat.selectAll('g').sort(baseSort);
 
-        var t = d3.select(this);
+        if (this.nodeName.toLowerCase() == 'rect') var t = d3.select(this);
+        if (this.nodeName.toLowerCase() == 'circle') {
+            var char = d3.select(this.parentNode).attr('class').replace(' timeline', '');
+            var rect = d3.selectAll('.flat rect.' + char)[0][i];
+            var t = d3.select(rect);
+        }
+
         if (t.classed('highlighted')) {
             t.classed('highlighted', false)
                 .transition()
@@ -477,7 +482,7 @@ d3.json("js/data.json", function(err, json) {
                 .attr('height', t.attr('height'))
                 .attr('y', +t.attr('y'))
                 .classed('highlight', true)
-                .attr('fill', '#b1b0b0')
+                .attr('fill', '#d9d9d9')
                 .attr('opacity', 0)
                     .transition()
                     .duration(500)
@@ -596,7 +601,8 @@ d3.json("js/data.json", function(err, json) {
             .attr('cy', vScaleCenter)
             .attr('fill', function(d){
                 return colorScale(charToClass(d.narrator));
-            });
+            })
+            .on('click', makeHighlight);
 
     // make secondary character dots
     pov_tlines.selectAll('circle.character')
