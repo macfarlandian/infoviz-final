@@ -16,8 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 // define some dimensions for padding and proportions
-var grid = 12, col = 100, w = col * grid, h = 900, pad = 10;
-var headh = 75;
+var grid = 12, col = 100, w = col * grid, h = 650, pad = 10;
 
 // panel widths
 var povw = col * 4, tensionw = col * 5, flatw = col * 1, outlinew = col * 2; // multipliers should add up to grid
@@ -28,10 +27,10 @@ var svg = d3.select("body").insert("svg", "script:first-of-type");
 svg.attr({"width": w, "height": h});
 
 // add the panels for each viz
-var pov = svg.append('g').attr("class", "pov top").attr("transform","translate(0,"+pad+")");
-var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +","+pad+")");
-var flat = svg.append('g').attr("class", "flat top").attr("transform", "translate("+ (povw + tensionw) +","+pad+")");
-var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +","+pad+")");
+var pov = svg.append('g').attr("class", "pov top").attr("transform","translate(0,0)");
+var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +",0)");
+var flat = svg.append('g').attr("class", "flat top").attr("transform", "translate("+ (povw + tensionw) +",0)");
+var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +",0)");
 
 // add static elements (axes and labels and shit like that)
 // code tk
@@ -138,11 +137,22 @@ d3.json("js/data.json", function(err, json) {
     var tensionScale = makePanelScale(tensionw);
     var outlineScale = makePanelScale(outlinew);
 
-    var colorScale = d3.scale.category10(); // temporary; will choose real colors later
+    var colorScale = d3.scale.ordinal()
+         .range([
+             'rgb(251, 145, 0)',
+             'rgb(0, 155, 145)',
+             'rgb(210, 70, 13)',
+             'rgb(117, 159, 0)',
+             'rgb(167, 50, 87)',
+             'rgb(0, 80, 125)',
+             'rgb(182, 36, 31)',
+             'rgb(0, 117, 48)',
+             'rgb(81, 27, 71)'
+             ])
     narratorlist.forEach(function(d,i,a){
         a[i] = charToClass(d);
     })
-    colorScale.domain(narratorlist);
+    colorScale.domain(narratorlist.sort());
 
     var tensionLineWidth = d3.scale.linear()
         .domain([0,7])
@@ -430,31 +440,42 @@ d3.json("js/data.json", function(err, json) {
     function makeHighlight(d,i){
         if (d3.event.defaultPrevented) return; // avoid conflict with drag
 
+        var oldstroke = flat.select('rect:not(.highlighted)').attr('stroke');
+
         // remove any existing highlight
         svg.select('rect.highlight')
             .transition()
             .attr('opacity', 0)
             .remove();
 
+        // return g to correct order
+        flat.selectAll('g').sort(baseSort);
+
         var t = d3.select(this);
         if (t.classed('highlighted')) {
             t.classed('highlighted', false)
                 .transition()
-                .attr('stroke', '#767676');
+                .attr('stroke', oldstroke);
+
         } else { // don't do this if you were clicking an already highlighted row
+            // move target g to top
+            var g = this.parentNode;
+            g.parentNode.appendChild(g);
+
             flat.selectAll('.highlighted')
                 .classed('highlighted', false)
                 .transition()
-                .attr('stroke', '#767676');
+                .attr('stroke', oldstroke);
 
             t.classed('highlighted', true)
                 .transition()
                 .duration(500)
                 .attr('stroke', '#000000');
+
             svg.insert('rect', 'g')
                 .attr('width', w)
                 .attr('height', t.attr('height'))
-                .attr('y', +t.attr('y') + pad)
+                .attr('y', +t.attr('y'))
                 .classed('highlight', true)
                 .attr('fill', '#b1b0b0')
                 .attr('opacity', 0)
@@ -496,6 +517,10 @@ d3.json("js/data.json", function(err, json) {
             }
             return shift;
         })
+        .style('color', function(d){
+            return colorScale(charToClass(d.key));
+        });
+
     header.select('div.pov')
         .insert('div', 'div')
         .attr('class', 'title')
@@ -565,7 +590,7 @@ d3.json("js/data.json", function(err, json) {
         .enter()
             .append('circle')
             .classed('narrator', true)
-            .attr('r', 8)
+            .attr('r', 7)
             .attr('opacity', 0.8)
             .attr('cx', pov_tlinec)
             .attr('cy', vScaleCenter)
@@ -581,7 +606,7 @@ d3.json("js/data.json", function(err, json) {
         .enter()
             .append('circle')
             .classed('character', true)
-            .attr('r', 5)
+            .attr('r', 4)
             .attr('opacity', 0.4)
             .attr('cx', pov_tlinec)
             .attr('cy', vScaleCenter)
@@ -613,7 +638,8 @@ d3.json("js/data.json", function(err, json) {
             .attr("fill", function(d){
                 return colorScale(charToClass(d.narrator));
             })
-            .attr("stroke", " #767676")
+            .attr("stroke", " #ffffff")
+            .attr('stroke-width', 0.5)
             .each(makeOutline) // fill in text outline
             .each(makeContextualPopup); // fill in contextual info for hover/click
 

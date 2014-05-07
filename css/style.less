@@ -4,29 +4,43 @@
 
 // dimension variables for calculation
 @w: 1200px;
-@h: 650px;
 @grid: (@w / 10);
 @grey: #767676;
-@headh: 80px;
+@headh: 60px;
+
+// color palette
+@ltgreen: rgb(117, 159, 0);
+@aqua: rgb(0, 155, 145);
+@blue: rgb(0, 80, 125);
+@green: rgb(0, 117, 48);
+@rose: rgb(167, 50, 87);
+@red: rgb(182, 36, 31);
+@gold: rgb(251, 145, 0);
+@umber: rgb(210, 70, 13);
+
 
 div.header {
     height: @headh;
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
+    width: 100%;
+    min-width: @w;
     background-color: rgba(255, 255, 255, 0.85);
     box-sizing: border-box;
-    padding: 10px;
+    margin: 0 10px;
     font-family: 'Varela', sans-serif;
 
     div.pov, div.tension, div.chapters {
+        box-sizing: border-box;
         position: relative;
         float: left;
         height: 100%;
+
         .title {
             text-align: center;
-            font-size: 20px;
+            font-size: 24px;
+            margin-top: 5px;
         }
 
         .label {

@@ -1,18 +1,20 @@
 @import url(http://fonts.googleapis.com/css?family=Varela);
 div.header {
-  height: 80px;
+  height: 60px;
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
+  min-width: 1200px;
   background-color: rgba(255, 255, 255, 0.85);
   box-sizing: border-box;
-  padding: 10px;
+  margin: 0 10px;
   font-family: 'Varela', sans-serif;
 }
 div.header div.pov,
 div.header div.tension,
 div.header div.chapters {
+  box-sizing: border-box;
   position: relative;
   float: left;
   height: 100%;
@@ -21,7 +23,8 @@ div.header div.pov .title,
 div.header div.tension .title,
 div.header div.chapters .title {
   text-align: center;
-  font-size: 20px;
+  font-size: 24px;
+  margin-top: 5px;
 }
 div.header div.pov .label,
 div.header div.tension .label,
@@ -47,7 +50,7 @@ div.header div.chapters .toggle {
   font-size: 13px;
 }
 svg {
-  margin-top: 80px;
+  margin-top: 60px;
 }
 svg line.axis {
   stroke: #767676;
