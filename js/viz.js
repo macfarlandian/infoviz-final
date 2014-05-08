@@ -221,14 +221,14 @@ d3.json("js/data.json", function(err, json) {
 
     function tool_tip(d) {
         return tooltip
-                .style("font-size", 13)
-                .style("top", function() {return (d3.event.pageY + flatBarScale(d.words)/2)})
-                .style("left", 980)
-                .html(tool_text(d))
-                .style("visibility","visible")
-                    .transition()
-                    .duration(500)
-                    .style("opacity", 0.9);
+            .style("font-size", 13)
+            .style("top", function() {return (d3.event.pageY + flatBarScale(d.words)/2)})
+            .style("left", 980)
+            .html(tool_text(d))
+            .style("visibility","visible")
+                .transition()
+                .duration(500)
+                .style("opacity", 0.9);
     }
 
 
@@ -460,6 +460,7 @@ d3.json("js/data.json", function(err, json) {
     // highlighting
     function makeHighlight(d,i){
         if (d3.event.defaultPrevented) return; // avoid conflict with drag
+
         var oldstroke = flat.select('rect:not(.highlighted)').attr('stroke');
 
         // remove any existing highlight
@@ -467,6 +468,9 @@ d3.json("js/data.json", function(err, json) {
             .transition()
             .attr('opacity', 0)
             .remove();
+
+        // turn off tooltip
+        tool_off(d);
 
         // return g to correct order
         flat.selectAll('g').sort(baseSort);
@@ -479,8 +483,6 @@ d3.json("js/data.json", function(err, json) {
         }
 
         var g = t.node().parentNode;
-
-
 
         if (t.classed('highlighted')) {
             t.classed('highlighted', false)
