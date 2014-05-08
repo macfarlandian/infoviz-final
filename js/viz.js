@@ -16,7 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 // define some dimensions for padding and proportions
-var grid = 12, col = 100, w = col * grid, h = 650, pad = 10;
+var grid = 12, col = 100, w = col * grid, h = 630, pad = 10;
+var smalltext = 7, largetext = 15;
 
 // panel widths
 var povw = col * 4, tensionw = col * 5, flatw = col * 1, outlinew = col * 2; // multipliers should add up to grid
@@ -210,20 +211,10 @@ d3.json("js/data.json", function(err, json) {
        d3.select(this.parentNode)
             .append("text")
             .text( function(d) {return d.chapter_id})
-            .attr('font-size', '5px')
-            .attr("font-family", "helvetica, arial, sans-serif")
+            .style('font-size', smalltext)
             .attr("y",vScaleCenter)
-            .attr("x", flatw + 10)
-            .on("mouseover", mouseover)
-            .on("mouseout", mouseout)
+            .attr("x", barw + (pad*4))
             .on("click", tool_tip);
-
-            var button = d3.select(".flat_top").append("svg:circle")
-            .attr("cx",280)
-            .attr("cy", 10)
-            .attr("r",10)
-            .attr("fill", "orange")
-            .on("click", theme_click);
     }
 
     var tooltip = d3.select("body").append("xhtml:div").attr("class","tooltip");
@@ -249,15 +240,16 @@ d3.json("js/data.json", function(err, json) {
     }
 
     function mouseover(d) {
-        var nodeSelection = d3.select(this).style({"font-size":'14px'});
-        nodeSelection.select("text").style({"font-size":'5px'});
+        d3.select(this).select('text')
+            .transition()
+            .style({"font-size":largetext});
     }
 
     function mouseout(d) {
-        var nodeSelection = d3.select(this).style({"font-size":'5px'});
-        nodeSelection.select("text").style({"font-size":'14px'})
+        d3.select(this).select('text')
+            .transition()
+            .style({"font-size":smalltext});
     }
-
 
     // 'this' refers to something else different from the this in makeOutline
     function theme_click(d) {
@@ -271,12 +263,6 @@ d3.json("js/data.json", function(err, json) {
                 var text = (state === "themes") ? d.themes : d.chapter_id;
                 d3.select(this).text(text);
             });
-    }
-
-
-
-    function makeContextualPopup(d,i){
-        // do that
     }
 
     function charToClass(name){
@@ -485,20 +471,50 @@ d3.json("js/data.json", function(err, json) {
             var t = d3.select(rect);
         }
 
+        var g = t.node().parentNode;
+
+
+
         if (t.classed('highlighted')) {
             t.classed('highlighted', false)
                 .transition()
                 .attr('stroke', oldstroke);
 
+            // restore mouseover, mouseout
+            d3.select(g)
+                .on('mouseover', mouseover)
+                .on('mouseout', mouseout)
+                    .select('text')
+                    .transition()
+                    .style('font-size', smalltext);
+
+
         } else { // don't do this if you were clicking an already highlighted row
             // move target g to top
-            var g = this.parentNode;
             g.parentNode.appendChild(g);
 
-            flat.selectAll('.highlighted')
-                .classed('highlighted', false)
-                .transition()
-                .attr('stroke', oldstroke);
+            var hilited = flat.select('.highlighted');
+
+            if (hilited.node()){
+                // restore old stroke color
+                hilited.classed('highlighted', false)
+                    .transition()
+                    .attr('stroke', oldstroke);
+
+                // restore text size
+                d3.select(hilited.node().parentNode)
+                    .select('text')
+                    .transition()
+                    .style('font-size', smalltext);
+            }
+
+            // disable mouseover/out on highlighted row
+            d3.select(g)
+                .on('mouseover', null)
+                .on('mouseout', null)
+                    .select('text')
+                    .transition()
+                    .style('font-size', largetext);
 
             t.classed('highlighted', true)
                 .transition()
@@ -654,6 +670,8 @@ d3.json("js/data.json", function(err, json) {
         .enter()
         .append("g")
             .call(drag)
+            .on("mouseover", mouseover)
+            .on("mouseout", mouseout)
             .append("rect")
             .on('click', makeHighlight)
             .attr("x", pad * 3)
