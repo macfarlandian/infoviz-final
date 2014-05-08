@@ -1,4 +1,7 @@
 @import url(http://fonts.googleapis.com/css?family=Varela);
+body {
+  font-family: 'Varela', sans-serif;
+}
 div.header {
   height: 60px;
   position: fixed;
@@ -9,7 +12,6 @@ div.header {
   background-color: rgba(255, 255, 255, 0.85);
   box-sizing: border-box;
   margin: 0 10px;
-  font-family: 'Varela', sans-serif;
 }
 div.header div.pov,
 div.header div.tension,
@@ -64,4 +66,37 @@ svg g.pov path.pov {
 }
 svg g.flat.top rect {
   stroke-width: 2px;
+}
+rect text:hover {
+  color: orange;
+}
+foreignObject {
+  width: 299px;
+}
+.tooltip {
+  color: orange;
+  opacity: .9;
+  background: #333;
+  padding: 5px;
+  border: 1px solid lightgrey;
+  border-radius: 5px;
+  position: absolute;
+  z-index: 10;
+  visibility: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  font-size: 12px;
+  width: 216px;
+  height: auto;
+  white-space: pre-wrap;
+  /* css-3 */
+  white-space: -moz-pre-wrap;
+  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;
+  /* Opera 4-6 */
+  white-space: -o-pre-wrap;
+  /* Opera 7 */
+  word-wrap: break-word;
+  /* Internet Explorer 5.5+ */
 }
