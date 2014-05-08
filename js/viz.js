@@ -250,12 +250,54 @@ d3.json("js/data.json", function(err, json) {
         d3.select(this).select('text')
             .transition()
             .style({"font-size":largetext});
+        // show labels on dots
+        // pov.select('g.' + charToClass(d.narrator))
+        //     .selectAll('circle.narrator')
+        //     .filter(function(c){
+        //         console.log(c);
+        //         // if (c.chapter_id == d.chapter_id) {
+        //         //     return true;
+        //         // } else {
+        //         //     return false;
+        //         // }
+        //     });
+
+        // show labels on tension lines
+        var label = tension.select('g.'+charToClass(d.narrator))
+            .append('g')
+            .classed('poplabel', true)
+            .attr('opacity', 0);
+
+        label.append('text')
+            .style('font-size', largetext * 1.5)
+            .attr('x', tension_tlinec - (pad/2))
+            .attr('y', vScaleCenter(d) + (largetext/2))
+            .text(d.tension)
+            .attr('fill', '#ffffff')
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 3);
+        // two texts layered for a better outline effect
+        label.append('text')
+            .style('font-size', largetext * 1.5)
+            .attr('x', tension_tlinec - (pad/2))
+            .attr('y', vScaleCenter(d) + (largetext/2))
+            .text(d.tension)
+            .attr('fill', '#000000');
+
+        label.transition()
+            .attr('opacity', 1);
     }
 
     function mouseout(d) {
         d3.select(this).select('text')
             .transition()
             .style({"font-size":smalltext});
+
+        // remove poplabels
+        svg.selectAll('.poplabel')
+            .transition()
+            .attr('opacity', 0)
+            .remove();
     }
 
     // 'this' refers to something else different from the this in makeOutline
@@ -266,10 +308,16 @@ d3.json("js/data.json", function(err, json) {
             state = "themes";
         }
         flat.selectAll("g text")
-            .each(function(d){
-                var text = (state === "themes") ? d.themes : d.chapter_id;
-                d3.select(this).text(text);
-            });
+            .transition()
+            .duration(250)
+            .attr('opacity',0)
+                .transition()
+                .duration(250)
+                .text(function(d){
+                    var text = (state === "themes") ? d.themes : d.chapter_id;
+                    return text;
+                })
+                .attr('opacity', 1);
     }
 
     function charToClass(name){
@@ -344,12 +392,14 @@ d3.json("js/data.json", function(err, json) {
                 // move drop target out of the way
                 drop.select('rect')
                     .transition()
+                    .duration(150)
                     .attr('y', function(d){
                         return flatBarScale(d.base);
                     });
 
                 drop.select('text')
                     .transition()
+                    .duration(150)
                     .attr('y', vScaleCenter);
 
                 // remove class to prevent recursion
@@ -450,7 +500,7 @@ d3.json("js/data.json", function(err, json) {
                 // realign everything in the flat bar
                 flat.selectAll('g').selectAll('rect')
                     .transition()
-                    .duration(500)
+                    .duration(300)
                     .attr('y', function(d){
                         return flatBarScale(d.base);
                     });
@@ -466,6 +516,7 @@ d3.json("js/data.json", function(err, json) {
         // remove any existing highlight
         svg.select('rect.highlight')
             .transition()
+            .duration(150)
             .attr('opacity', 0)
             .remove();
 
@@ -487,6 +538,7 @@ d3.json("js/data.json", function(err, json) {
         if (t.classed('highlighted')) {
             t.classed('highlighted', false)
                 .transition()
+                .duration(150)
                 .attr('stroke', oldstroke);
 
             // restore mouseover, mouseout
@@ -495,6 +547,7 @@ d3.json("js/data.json", function(err, json) {
                 .on('mouseout', mouseout)
                     .select('text')
                     .transition()
+                    .duration(150)
                     .style('font-size', smalltext);
 
 
@@ -508,12 +561,14 @@ d3.json("js/data.json", function(err, json) {
                 // restore old stroke color
                 hilited.classed('highlighted', false)
                     .transition()
+                    .duration(150)
                     .attr('stroke', oldstroke);
 
                 // restore text size
                 d3.select(hilited.node().parentNode)
                     .select('text')
                     .transition()
+                    .duration(150)
                     .style('font-size', smalltext);
             }
 
@@ -523,11 +578,12 @@ d3.json("js/data.json", function(err, json) {
                 .on('mouseout', null)
                     .select('text')
                     .transition()
+                    .duration(150)
                     .style('font-size', largetext);
 
             t.classed('highlighted', true)
                 .transition()
-                .duration(500)
+                .duration(150)
                 .attr('stroke', '#000000');
 
             svg.insert('rect', 'g')
@@ -538,7 +594,7 @@ d3.json("js/data.json", function(err, json) {
                 .attr('fill', '#e2e2e2')
                 .attr('opacity', 0)
                     .transition()
-                    .duration(500)
+                    .duration(150)
                     .attr('opacity', 1);
 
             tool_tip(d);
