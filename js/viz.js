@@ -26,15 +26,15 @@ var barw = 40;
 var svg = d3.select("body").insert("svg", "script:first-of-type");
 svg.attr({"width": w, "height": h});
 
-// add the panels for each viz
-var pov = svg.append('g').attr("class", "pov top").attr("transform","translate(0,0)");
-var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +",0)");
-var flat = svg.append('g').attr("class", "flat top").attr("transform", "translate("+ (povw + tensionw) +",0)");
-var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +",0)");
+var pov = svg.append('g').attr("class", "pov top").attr("transform","translate(0,"+pad+")");
+var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +","+pad+")");
+var flat = svg.append('g').attr("class", "flat_top").attr("transform", "translate("+ (povw + tensionw) +","+pad+")");
+var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +","+pad+")");
 
 // add static elements (axes and labels and shit like that)
 // code tk
 var state = "chapters";
+
 
 // get the data async and populate the viz
 var data, narrators;
@@ -75,7 +75,6 @@ d3.json("js/data.json", function(err, json) {
         narratorlist.push(d.key.toLowerCase());
     });
     old_narratorlist = narratorlist.slice();
-
 
     // remove characters who aren't narrators
     json.forEach(function(d,i,a){
@@ -204,7 +203,7 @@ d3.json("js/data.json", function(err, json) {
         return points;
     }
 
-    /// Stuff you edited
+    /// Stuff Paul edited
     function makeOutline(d){
        // append outline text to each flat bar segment; transition if necessary
        // this.parentNode == g
@@ -217,9 +216,36 @@ d3.json("js/data.json", function(err, json) {
             .attr("x", flatw + 10)
             .on("mouseover", mouseover)
             .on("mouseout", mouseout)
-            .on("click", theme_click)
-            //.on("click", function(d) {d3.selectAll("text").text(d.themes)});
-            //.on("click", function(d) {d3.selectAll("text").text(d.chapter_id)});
+            .on("click", tool_tip);
+
+            var button = d3.select(".flat_top").append("svg:circle")
+            .attr("cx",280)
+            .attr("cy", 10)
+            .attr("r",10)
+            .attr("fill", "orange")
+            .on("click", theme_click);
+    }
+
+    var tooltip = d3.select("body").append("xhtml:div").attr("class","tooltip");
+
+    function tool_tip(d) {
+        return tooltip
+                .style("visibility","visible")
+                .style("opacity", 0.9)
+                .style("font-size", "12px")
+                .style("font-family", "Arial")
+                .style("top", function() {return (d3.event.pageY + flatBarScale(d.words)/2)})
+                .style("left", 980)
+                .html(tool_text(d));
+    }
+
+
+    function tool_text(d) {
+        return "Notes: " + d.events + "<br/><br/>" + "POV: " + d.pov + "<br/><br/>" + "Location: " + d.location;
+    }
+
+    function tool_off(d) {
+            return d3.selectAll(".tooltip").style("visibility","hidden").style("opacity", 0);
     }
 
     function mouseover(d) {
@@ -248,6 +274,7 @@ d3.json("js/data.json", function(err, json) {
     }
 
 
+
     function makeContextualPopup(d,i){
         // do that
     }
@@ -268,7 +295,8 @@ d3.json("js/data.json", function(err, json) {
             return {"x": 0, "y": parseFloat(target.attr('y'))};
          })
         .on('dragstart',function(d,i){ // aka mousedown
-            // don't do anything - see drag event
+            // This turns off tool tip when you click and hold a segment
+            tool_off(d)
         })
         .on('drag', function(d,i){
             // add a class to element being dragged
@@ -480,17 +508,15 @@ d3.json("js/data.json", function(err, json) {
             svg.insert('rect', 'g')
                 .attr('width', w)
                 .attr('height', t.attr('height'))
-                .attr('y', +t.attr('y'))
+                .attr('y', +t.attr('y') + pad)
                 .classed('highlight', true)
-                .attr('fill', '#d9d9d9')
+                .attr('fill', '#b1b0b0')
                 .attr('opacity', 0)
                     .transition()
                     .duration(500)
                     .attr('opacity', 1);
+            return tool_tip(d);
         }
-
-
-
     }
 
 
