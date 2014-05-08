@@ -34,14 +34,14 @@ div.header div.chapters .label {
   position: absolute;
   font-size: 12px;
 }
-div.header div.pov .label:nth-of-type(odd),
-div.header div.tension .label:nth-of-type(odd),
-div.header div.chapters .label:nth-of-type(odd) {
-  bottom: 0;
-}
 div.header div.pov .label:nth-of-type(even),
 div.header div.tension .label:nth-of-type(even),
 div.header div.chapters .label:nth-of-type(even) {
+  bottom: 0;
+}
+div.header div.pov .label:nth-of-type(odd),
+div.header div.tension .label:nth-of-type(odd),
+div.header div.chapters .label:nth-of-type(odd) {
   bottom: 12px;
 }
 div.header div.pov .toggle,
