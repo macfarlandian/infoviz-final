@@ -221,22 +221,29 @@ d3.json("js/data.json", function(err, json) {
 
     function tool_tip(d) {
         return tooltip
-                .style("visibility","visible")
-                .style("opacity", 0.9)
-                .style("font-size", "12px")
-                .style("font-family", "Arial")
+                .style("font-size", 13)
                 .style("top", function() {return (d3.event.pageY + flatBarScale(d.words)/2)})
                 .style("left", 980)
-                .html(tool_text(d));
+                .html(tool_text(d))
+                .style("visibility","visible")
+                    .transition()
+                    .duration(500)
+                    .style("opacity", 0.9);
     }
 
 
     function tool_text(d) {
-        return "Notes: " + d.events + "<br/><br/>" + "POV: " + d.pov + "<br/><br/>" + "Location: " + d.location;
+        return "Events: " + d.events + "<br/><br/>" + "POV: " + d.pov + "<br/><br/>" + "Location: " + d.location;
     }
 
     function tool_off(d) {
-            return d3.selectAll(".tooltip").style("visibility","hidden").style("opacity", 0);
+        return d3.selectAll(".tooltip")
+            .transition()
+            .duration(500)
+            .style("opacity", 0)
+                .transition()
+                .delay(500)
+                .style("visibility","hidden");
     }
 
     function mouseover(d) {
@@ -526,12 +533,13 @@ d3.json("js/data.json", function(err, json) {
                 .attr('height', t.attr('height'))
                 .attr('y', +t.attr('y') + pad)
                 .classed('highlight', true)
-                .attr('fill', '#b1b0b0')
+                .attr('fill', '#e2e2e2')
                 .attr('opacity', 0)
                     .transition()
                     .duration(500)
                     .attr('opacity', 1);
-            return tool_tip(d);
+
+            tool_tip(d);
         }
     }
 
@@ -589,7 +597,8 @@ d3.json("js/data.json", function(err, json) {
         .attr('class', 'toggle')
             .append('a')
             .attr('href', 'javascript:;')
-            .text('toggle themes');
+            .text('toggle themes')
+            .on("click", theme_click);
 
 
     // timelines in pov and tension panels: one for each narrator
@@ -690,8 +699,7 @@ d3.json("js/data.json", function(err, json) {
             })
             .attr("stroke", " #ffffff")
             .attr('stroke-width', 0.5)
-            .each(makeOutline) // fill in text outline
-            .each(makeContextualPopup); // fill in contextual info for hover/click
+            .each(makeOutline); // fill in text outline
 
 
     // make pov path
