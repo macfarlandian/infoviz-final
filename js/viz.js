@@ -388,13 +388,13 @@ d3.json("js/data.json", function(err, json) {
                     baseline += +d.words;
                 })
 
-                // deactivate drag targets
-                flat.selectAll('g')
-                    .on('mouseover', null)
-                    .on('mouseout', null);
-
                 // restore pointer events
                 t.attr('pointer-events', '');
+
+                // deactivate drag targets and restore mouseover/out
+                d3.selectAll('.flat g')
+                    .on('mouseover', mouseover)
+                    .on('mouseout', mouseout)
 
                 // backup old JSON first
                 d3.xhr('js/backup.php', 'application/json')
