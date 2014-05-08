@@ -29,7 +29,7 @@ svg.attr({"width": w, "height": h});
 
 var pov = svg.append('g').attr("class", "pov top").attr("transform","translate(0,"+pad+")");
 var tension = svg.append('g').attr("class", "tension top").attr("transform", "translate("+ (povw) +","+pad+")");
-var flat = svg.append('g').attr("class", "flat_top").attr("transform", "translate("+ (povw + tensionw) +","+pad+")");
+var flat = svg.append('g').attr("class", "flat top").attr("transform", "translate("+ (povw + tensionw) +","+pad+")");
 var outline = svg.append('g').attr("class", "outline top").attr("transform", "translate("+ (povw + tensionw + flatw) +","+pad+")");
 
 // add static elements (axes and labels and shit like that)
