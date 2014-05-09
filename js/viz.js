@@ -503,17 +503,17 @@ d3.json("js/data.json", function(err, json) {
                     .on('mouseout', mouseout)
 
                 // backup old JSON first
-                d3.xhr('js/backup.php', 'application/json')
-                    .post(JSON.stringify(json), function(error, response){
-                        // don't overwrite the old one unless there's no error
-                        if (!error) {
-                            // save new data to JSON
-                            d3.xhr('js/save.php', 'application/json')
-                                .post(JSON.stringify(flat.selectAll('g').data()), function(error, response){
-                                    // don't do anything
-                                });
-                        }
-                    });
+                // d3.xhr('js/backup.php', 'application/json')
+                //     .post(JSON.stringify(json), function(error, response){
+                //         // don't overwrite the old one unless there's no error
+                //         if (!error) {
+                //             // save new data to JSON
+                //             d3.xhr('js/save.php', 'application/json')
+                //                 .post(JSON.stringify(flat.selectAll('g').data()), function(error, response){
+                //                     // don't do anything
+                //                 });
+                //         }
+                //     });
 
                 // update the viz
                 var new_narrators = makeNarrators(flat.selectAll('g').data());
