@@ -251,6 +251,20 @@ d3.json("js/data.json", function(err, json) {
             .transition()
             .style({"font-size":largetext});
 
+        makeLabels(d);
+    }
+
+    function mouseout(d) {
+        d3.select(this).select('text')
+            .transition()
+            .style({"font-size":smalltext});
+
+        removeLabels();
+    }
+
+    function makeLabels(d) {
+        // takes a datum from the flat bar
+
         // show labels on dots
         var label = pov.select('g.' + charToClass(d.narrator))
             .append('g')
@@ -332,11 +346,7 @@ d3.json("js/data.json", function(err, json) {
             .attr('opacity', 1);
     }
 
-    function mouseout(d) {
-        d3.select(this).select('text')
-            .transition()
-            .style({"font-size":smalltext});
-
+    function removeLabels(){
         // remove poplabels
         svg.selectAll('.poplabel')
             .transition()
@@ -577,6 +587,8 @@ d3.json("js/data.json", function(err, json) {
             var t = d3.select(rect);
         }
 
+        removeLabels();
+
         var g = t.node().parentNode;
 
         if (t.classed('highlighted')) {
@@ -596,6 +608,7 @@ d3.json("js/data.json", function(err, json) {
 
 
         } else { // don't do this if you were clicking an already highlighted row
+
             // move target g to top
             g.parentNode.appendChild(g);
 
@@ -642,6 +655,9 @@ d3.json("js/data.json", function(err, json) {
                     .attr('opacity', 1);
 
             tool_tip(d);
+
+            makeLabels(d);
+
         }
     }
 
