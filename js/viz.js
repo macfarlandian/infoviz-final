@@ -251,7 +251,7 @@ d3.json("js/data.json", function(err, json) {
             .transition()
             .style({"font-size":largetext});
 
-        makeLabels(d);
+        // makeLabels(d);
     }
 
     function mouseout(d) {
@@ -259,7 +259,7 @@ d3.json("js/data.json", function(err, json) {
             .transition()
             .style({"font-size":smalltext});
 
-        removeLabels();
+        // removeLabels();
     }
 
     function makeLabels(d) {
