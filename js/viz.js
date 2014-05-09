@@ -233,7 +233,13 @@ d3.json("js/data.json", function(err, json) {
 
 
     function tool_text(d) {
-        return "Events: " + d.events + "<br/><br/>" + "POV: " + d.pov + "<br/><br/>" + "Location: " + d.location;
+        var contents =  "Synopsis: " + d.events + "<br/><br/>";
+        contents += "POV: " + d.pov + "<br/><br/>";
+        contents += "Location: " + d.location + "<br/><br/>";
+        contents += "Word Count: " + d.words + "<br/><br/>";
+        contents += "Timeframe: " + d.backstory;
+
+        return contents;
     }
 
     function tool_off(d) {
