@@ -361,17 +361,66 @@ d3.json("js/data.json", function(err, json) {
         } else {
             state = "themes";
         }
+
         flat.selectAll("g text")
             .transition()
             .duration(250)
-            .attr('opacity',0)
-                .transition()
-                .duration(250)
+            .attr('opacity',0);
+
+        d3.timer(function(){
+            flat.selectAll("g text")
                 .text(function(d){
-                    var text = (state === "themes") ? d.themes : d.chapter_id;
+                    if (state === "chapters") {
+                        var text = d.chapter_id;
+                    } else {
+                        var text = null;
+                    }
                     return text;
                 })
-                .attr('opacity', 1);
+                .each(makeThemes)
+                .transition()
+                .duration(250)
+                .attr('opacity',1);
+            return true;
+        },270);
+    }
+
+    function makeThemes(d){
+        // make themes in tspans
+        if (state === 'themes'){
+            var thetext = this;
+            d.themes.forEach(function(v,i,a){
+                d3.select(thetext).append("tspan")
+                    .text(v)
+                    .attr('class', charToClass(v))
+                    .attr('dx', function(){
+                        return i==0 ? 0 : pad;
+                    })
+                    .attr('alignment-baseline', 'middle')
+                    .on('click', themeHighlight);
+            });
+        }
+    }
+
+    function themeHighlight(d){
+        var tclass = d3.select(this).attr('class').replace('hilited', '');
+        var themes = d3.selectAll('tspan.' + tclass);
+
+        if (themes.classed('hilited')) {
+            themes.classed('hilited', false)
+                .transition()
+                .attr('fill', '#000000');
+        } else {
+            // remove all previous theme highlights
+            d3.selectAll('.flat tspan')
+                .classed('hilited', false)
+                .transition()
+                .attr('fill', '#000000');
+
+            themes.classed('hilited', true)
+                .transition()
+                .attr('fill', 'rgb(236, 40, 40)');
+        }
     }
 
     function charToClass(name){
