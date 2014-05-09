@@ -214,7 +214,7 @@ d3.json("js/data.json", function(err, json) {
             .style('font-size', smalltext)
             .attr("y",vScaleCenter)
             .attr("x", barw + (pad*4))
-            .on("click", tool_tip);
+            .attr('dominant-baseline', 'middle');
     }
 
     var tooltip = d3.select("body").append("xhtml:div").attr("class","tooltip");
