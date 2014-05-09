@@ -250,17 +250,32 @@ d3.json("js/data.json", function(err, json) {
         d3.select(this).select('text')
             .transition()
             .style({"font-size":largetext});
+
         // show labels on dots
-        // pov.select('g.' + charToClass(d.narrator))
-        //     .selectAll('circle.narrator')
-        //     .filter(function(c){
-        //         console.log(c);
-        //         // if (c.chapter_id == d.chapter_id) {
-        //         //     return true;
-        //         // } else {
-        //         //     return false;
-        //         // }
-        //     });
+        var label = pov.select('g.' + charToClass(d.narrator))
+            .append('g')
+            .classed('poplabel', true)
+            .attr('opacity', 0);
+
+        label.append('text')
+            .style('font-size', largetext)
+            .attr('text-anchor', 'middle')
+            .attr('x', pov_tlinec)
+            .attr('y', vScaleCenter(d) + (largetext))
+            .text(d.narrator)
+            .attr('fill', '#ffffff')
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 3);
+        // two texts layered for a better outline effect
+        label.append('text')
+            .style('font-size', largetext)
+            .attr('text-anchor', 'middle')
+            .attr('x', pov_tlinec)
+            .attr('y', vScaleCenter(d) + (largetext))
+            .text(d.narrator)
+            .attr('fill', colorScale(charToClass(d.narrator)));
+        label.transition()
+            .attr('opacity', 1);
 
         // show labels on tension lines
         var label = tension.select('g.'+charToClass(d.narrator))
@@ -270,7 +285,8 @@ d3.json("js/data.json", function(err, json) {
 
         label.append('text')
             .style('font-size', largetext * 1.5)
-            .attr('x', tension_tlinec - (pad/2))
+            .attr('text-anchor', 'middle')
+            .attr('x', tension_tlinec)
             .attr('y', vScaleCenter(d) + (largetext/2))
             .text(d.tension)
             .attr('fill', '#ffffff')
@@ -279,10 +295,11 @@ d3.json("js/data.json", function(err, json) {
         // two texts layered for a better outline effect
         label.append('text')
             .style('font-size', largetext * 1.5)
-            .attr('x', tension_tlinec - (pad/2))
+            .attr('text-anchor', 'middle')
+            .attr('x', tension_tlinec)
             .attr('y', vScaleCenter(d) + (largetext/2))
             .text(d.tension)
-            .attr('fill', '#000000');
+            .attr('fill', colorScale(charToClass(d.narrator)));
 
         label.transition()
             .attr('opacity', 1);
