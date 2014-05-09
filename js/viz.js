@@ -611,10 +611,17 @@ d3.json("js/data.json", function(err, json) {
                     });
 
                 // new labels
-                d3.timer(function(){
-                    makeLabels(d);
-                    return true;
-                },350)
+                if (t.select('rect').classed('highlighted')){
+                    d3.timer(function(){
+                        // makeHighlight(d,i);
+                        makeLabels(d);
+                        svg.select('rect.highlight')
+                            .transition()
+                            .attr('y', (+t.select('rect').attr('y') + pad))
+                        return true;
+                    },350)
+                }
+
             }
         });
 
@@ -759,7 +766,7 @@ d3.json("js/data.json", function(err, json) {
     header.select('div.tension')
         .insert('div', 'div')
         .attr('class', 'title')
-        .text('Tension Lines')
+        .text('Dramatic Tension')
 
     header.append('div')
         .attr('class', 'chapters')
