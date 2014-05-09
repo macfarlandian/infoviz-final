@@ -495,6 +495,8 @@ d3.json("js/data.json", function(err, json) {
                 // restore pointer events
                 t.attr('pointer-events', '');
 
+                removeLabels();
+
                 // deactivate drag targets and restore mouseover/out
                 d3.selectAll('.flat g')
                     .on('mouseover', mouseover)
@@ -558,6 +560,12 @@ d3.json("js/data.json", function(err, json) {
                     .attr('y', function(d){
                         return flatBarScale(d.base);
                     });
+
+                // new labels
+                d3.timer(function(){
+                    makeLabels(d);
+                    return true;
+                },350)
             }
         });
 
