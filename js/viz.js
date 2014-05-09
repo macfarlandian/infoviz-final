@@ -681,7 +681,7 @@ d3.json("js/data.json", function(err, json) {
     header.select('div.pov')
         .insert('div', 'div')
         .attr('class', 'title')
-        .text('POV Path');
+        .text('Narrator & Characters');
 
     header.select('div.tension')
         .insert('div', 'div')
@@ -693,7 +693,7 @@ d3.json("js/data.json", function(err, json) {
         .style('width', flatw + outlinew)
             .append('div')
             .attr('class', 'title')
-            .text('Chapter IDs');
+            .text('Chapters');
     header.select('div.chapters')
         .append('div')
         .attr('class', 'toggle')
