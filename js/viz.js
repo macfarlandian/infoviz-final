@@ -277,8 +277,35 @@ d3.json("js/data.json", function(err, json) {
         label.transition()
             .attr('opacity', 1);
 
+        // labels for characters
+        d.characters.forEach(function(v,i,a){
+            label = pov.select('g.' + charToClass(v))
+                .append('g')
+                .classed('poplabel',true)
+                .attr('opacity', 0);
+            label.append('text')
+                .style('font-size', largetext/2)
+                .attr('text-anchor', 'middle')
+                .attr('x', pov_tlinec)
+                .attr('y', vScaleCenter(d) + (largetext))
+                .text(v)
+                .attr('fill', '#ffffff')
+                .attr('stroke', '#ffffff')
+                .attr('stroke-width', 3);
+            // two texts layered for a better outline effect
+            label.append('text')
+                .style('font-size', largetext * 0.75)
+                .attr('text-anchor', 'middle')
+                .attr('x', pov_tlinec)
+                .attr('y', vScaleCenter(d) + (largetext))
+                .text(v)
+                .attr('fill', colorScale(charToClass(v)));
+            label.transition()
+                .attr('opacity', 1);
+        });
+
         // show labels on tension lines
-        var label = tension.select('g.'+charToClass(d.narrator))
+        label = tension.select('g.'+charToClass(d.narrator))
             .append('g')
             .classed('poplabel', true)
             .attr('opacity', 0);
